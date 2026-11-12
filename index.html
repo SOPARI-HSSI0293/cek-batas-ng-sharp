@@ -41,6 +41,8 @@ video{width:100%;border-radius:14px;background:#000;display:none;margin-top:12px
 .unit{font-size:1.2rem;color:var(--muted);font-weight:600}
 .detail{color:var(--muted);font-size:1.05rem;margin-top:14px;line-height:1.6}
 .detail b{color:var(--text)}
+#manualBtn{margin-top:12px}
+#manualBox{margin-top:12px}
 .foot{grid-column:1/-1;text-align:center;color:var(--muted);font-size:.85rem;letter-spacing:.08em;padding:6px 0 2px;opacity:.8}
 </style>
 </head>
@@ -54,6 +56,11 @@ video{width:100%;border-radius:14px;background:#000;display:none;margin-top:12px
       <div class="row">
         <input id="scan" type="text" autocomplete="off" autofocus placeholder="Scan di sini">
         <button class="sec fit" id="camBtn" type="button">Kamera</button>
+      </div>
+      <button class="sec" id="manualBtn" type="button">Input Berat Manual</button>
+      <div id="manualBox" class="hide">
+        <label for="wraw">Berat raw material (kg)</label>
+        <input id="wraw" type="text" inputmode="decimal" autocomplete="off" placeholder="mis. 1140">
       </div>
       <video id="video" playsinline muted></video>
       <div class="err" id="scanErr"></div>
@@ -109,6 +116,7 @@ function handleScan(text){
   if (!text.trim()) return;
   try{
     const r = parseScan(text);
+    closeManual(true);
     rawWeight = r.weight;
     $('f0').textContent = r.parts[0];
     $('f2').textContent = r.parts[2] || '-';
@@ -142,6 +150,30 @@ function calc(){
     fmt(limitKg) + ' ÷ ' + fmt(ws, 4) + ' kg/lembar = ' + fmt(limitKg / ws, 2) + ' → <b>dibulatkan ke atas</b>';
 }
 
+function closeManual(keepWeight){
+  $('manualBox').classList.add('hide');
+  $('wraw').value = '';
+  $('manualBtn').textContent = 'Input Berat Manual';
+  if (!keepWeight && manualActive){ rawWeight = null; }
+  manualActive = false;
+}
+let manualActive = false;
+$('manualBtn').addEventListener('click', () => {
+  if (manualActive){ closeManual(false); calc(); return; }
+  manualActive = true;
+  $('manualBox').classList.remove('hide');
+  $('manualBtn').textContent = 'Tutup Input Manual';
+  $('info').classList.add('hide');
+  $('scanErr').textContent = '';
+  rawWeight = null; calc();
+  $('wraw').focus();
+});
+$('wraw').addEventListener('input', () => {
+  const w = parseFloat($('wraw').value.replace(/\s/g, '').replace(',', '.'));
+  rawWeight = (isFinite(w) && w > 0) ? w : null;
+  calc();
+});
+
 $('scan').addEventListener('keydown', e => {
   if (e.key === 'Enter'){ e.preventDefault(); handleScan($('scan').value); }
 });
@@ -149,7 +181,7 @@ $('scan').addEventListener('change', () => handleScan($('scan').value));
 ['wsheet','pct','unit'].forEach(id => $(id).addEventListener('input', calc));
 
 $('reset').addEventListener('click', () => {
-  rawWeight = null;
+  rawWeight = null; closeManual(true);
   $('scan').value = ''; $('wsheet').value = '';
   $('info').classList.add('hide'); $('scanErr').textContent = '';
   calc(); stopCam(); $('scan').focus();
