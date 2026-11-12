@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Cek Batas NG Input System SHARP</title>
+<style>
+:root{--bg:#0a0e14;--card:#131a24;--card2:#0e141c;--line:#223044;--text:#eaf1f9;--muted:#8a9bb0;--pri:#38bdf8;--accent:#ffa726;--bad:#ff5d6c;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:radial-gradient(1200px 600px at 80% -10%,#10263a 0%,transparent 60%),var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:20px}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:18px;grid-template-columns:1fr}
+@media (min-width:860px){.wrap{grid-template-columns:minmax(0,5fr) minmax(0,6fr);align-items:stretch}.head{grid-column:1/-1}.left{display:grid;gap:18px;align-content:start}}
+.head h1{font-size:1.1rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:700}
+.head h1 span{color:var(--pri)}
+.card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+label{display:block;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-weight:600}
+input,select,button{font:inherit;border-radius:14px;border:1px solid var(--line);background:#0a1018;color:var(--text);padding:16px 18px;width:100%;font-size:1.25rem}
+input::placeholder{color:#4b5b70}
+input:focus,select:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(56,189,248,.25)}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+.fit{flex:0 0 auto;width:auto}
+button{cursor:pointer;font-weight:700;background:var(--pri);color:#03121c;border:none;min-height:56px}
+button:active{transform:scale(.98)}
+button.sec{background:#162131;color:var(--text);border:1px solid var(--line)}
+.grid{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:1rem;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+.grid span{color:var(--muted)}
+.grid b{word-break:break-all;text-align:right}
+.err{color:var(--bad);font-size:1rem;margin-top:10px;min-height:1.2em;font-weight:600}
+video{width:100%;border-radius:14px;background:#000;display:none;margin-top:12px}
+.hide{display:none}
+.result{display:flex;flex-direction:column;justify-content:center;text-align:center;min-height:440px;position:relative;overflow:hidden;border-color:#3d2f18}
+.result::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,rgba(255,167,38,.15),transparent 62%);pointer-events:none}
+.result>*{position:relative}
+.rlabel{font-size:clamp(1.1rem,2.6vw,1.6rem);font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.big{font-size:clamp(7rem,24vw,15rem);font-weight:900;line-height:1;margin:10px 0;color:var(--accent);text-shadow:0 0 40px rgba(255,167,38,.6);font-variant-numeric:tabular-nums}
+.big.zero{color:var(--bad);text-shadow:0 0 40px rgba(255,93,108,.5)}
+.big.idle{color:#2b3a4e;text-shadow:none}
+.unit{font-size:1.2rem;color:var(--muted);font-weight:600}
+.detail{color:var(--muted);font-size:1.05rem;margin-top:14px;line-height:1.6}
+.detail b{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head"><h1>Cek Batas <span>NG</span> Input System <span>SHARP</span></h1></div>
+
+  <div class="left">
+    <div class="card">
+      <label for="scan">1 · Scan QR-code</label>
+      <div class="row">
+        <input id="scan" type="text" autocomplete="off" autofocus placeholder="Scan di sini">
+        <button class="sec fit" id="camBtn" type="button">Kamera</button>
+      </div>
+      <video id="video" playsinline muted></video>
+      <div class="err" id="scanErr"></div>
+      <div class="grid hide" id="info">
+        <span>Kode</span><b id="f0"></b>
+        <span>Spesifikasi</span><b id="f2"></b>
+        <span>Lot / Coil</span><b id="f3"></b>
+        <span>Berat raw material</span><b id="f5"></b>
+      </div>
+    </div>
+
+    <div class="card">
+      <label for="wsheet">2 · Berat per lembar</label>
+      <div class="row">
+        <input id="wsheet" type="number" inputmode="decimal" min="0" step="any" placeholder="mis. 2.5">
+        <select id="unit" class="fit"><option value="kg">kg</option><option value="g">gram</option></select>
+      </div>
+      <label for="pct" style="margin-top:18px">Batas NG (% dari berat raw material)</label>
+      <input id="pct" type="number" inputmode="decimal" min="0" step="any" value="1.5">
+      <div class="err" id="calcErr"></div>
+    </div>
+  </div>
+
+  <div class="card result">
+    <div class="rlabel">Batas NG INPUT SYSTEM</div>
+    <div class="big idle" id="maxNg">–</div>
+    <div class="unit" id="unitLbl">lembar</div>
+    <div class="detail" id="detail">Scan QR dan isi berat per lembar.</div>
+    <button class="sec" id="reset" type="button" style="margin-top:22px">Reset / Scan berikutnya</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let rawWeight = null; // kg
+
+function fmt(n, d = 3){
+  return Number(n).toLocaleString('id-ID', {maximumFractionDigits: d});
+}
+
+function parseScan(text){
+  const p = text.split(',').map(s => s.trim());
+  if (p.length < 6) throw new Error('Data QR tidak valid: minimal 6 data dipisah koma (terbaca ' + p.length + ').');
+  const w = parseFloat(p[5].replace(/\s/g, '').replace(',', '.'));
+  if (!isFinite(w) || w <= 0) throw new Error('Data ke-6 bukan angka berat yang valid: "' + p[5] + '"');
+  return {parts: p, weight: w};
+}
+
+function handleScan(text){
+  $('scanErr').textContent = '';
+  if (!text.trim()) return;
+  try{
+    const r = parseScan(text);
+    rawWeight = r.weight;
+    $('f0').textContent = r.parts[0];
+    $('f2').textContent = r.parts[2] || '-';
+    $('f3').textContent = r.parts[3] || '-';
+    $('f5').textContent = fmt(r.weight) + ' kg';
+    $('info').classList.remove('hide');
+    $('wsheet').focus();
+  }catch(e){
+    rawWeight = null;
+    $('info').classList.add('hide');
+    $('scanErr').textContent = e.message;
+  }
+  calc();
+}
+
+function calc(){
+  $('calcErr').textContent = '';
+  const out = $('maxNg'), det = $('detail');
+  out.className = 'big idle';
+  const pct = parseFloat($('pct').value);
+  let ws = parseFloat($('wsheet').value);
+  if (rawWeight === null){ out.textContent = '–'; det.textContent = 'Scan QR dan isi berat per lembar.'; return; }
+  if (!isFinite(pct) || pct < 0){ $('calcErr').textContent = 'Persentase tidak valid.'; out.textContent = '–'; return; }
+  if (!isFinite(ws) || ws <= 0){ out.textContent = '–'; det.textContent = 'Isi berat per lembar.'; return; }
+  if ($('unit').value === 'g') ws = ws / 1000;
+  const limitKg = rawWeight * pct / 100;
+  const max = Math.ceil(limitKg / ws - 1e-9); // pembulatan ke atas
+  out.textContent = max;
+  out.className = 'big' + (max > 0 ? '' : ' zero');
+  det.innerHTML = 'Batas ' + fmt(pct) + '% × ' + fmt(rawWeight) + ' kg = <b>' + fmt(limitKg) + ' kg</b><br>' +
+    fmt(limitKg) + ' ÷ ' + fmt(ws, 4) + ' kg/lembar = ' + fmt(limitKg / ws, 2) + ' → <b>dibulatkan ke atas</b>';
+}
+
+$('scan').addEventListener('keydown', e => {
+  if (e.key === 'Enter'){ e.preventDefault(); handleScan($('scan').value); }
+});
+$('scan').addEventListener('change', () => handleScan($('scan').value));
+['wsheet','pct','unit'].forEach(id => $(id).addEventListener('input', calc));
+
+$('reset').addEventListener('click', () => {
+  rawWeight = null;
+  $('scan').value = ''; $('wsheet').value = '';
+  $('info').classList.add('hide'); $('scanErr').textContent = '';
+  calc(); stopCam(); $('scan').focus();
+});
+
+// Kamera (opsional)
+let stream = null, camTimer = null;
+function stopCam(){
+  if (camTimer) clearInterval(camTimer); camTimer = null;
+  if (stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
+  $('video').style.display = 'none'; $('camBtn').textContent = 'Kamera';
+}
+$('camBtn').addEventListener('click', async () => {
+  if (stream){ stopCam(); return; }
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+  }catch(e){ $('scanErr').textContent = 'Kamera tidak dapat diakses (butuh HTTPS & izin kamera).'; return; }
+  const v = $('video'); v.srcObject = stream; v.style.display = 'block'; await v.play();
+  $('camBtn').textContent = 'Tutup';
+  const detector = ('BarcodeDetector' in window) ? new BarcodeDetector({formats:['qr_code']}) : null;
+  const cv = document.createElement('canvas'), cx = cv.getContext('2d', {willReadFrequently:true});
+  camTimer = setInterval(async () => {
+    if (v.readyState < 2) return;
+    let text = null;
+    try{
+      if (detector){ const r = await detector.detect(v); if (r.length) text = r[0].rawValue; }
+      else if (window.jsQR){
+        cv.width = v.videoWidth; cv.height = v.videoHeight; cx.drawImage(v, 0, 0);
+        const d = cx.getImageData(0, 0, cv.width, cv.height);
+        const r = jsQR(d.data, d.width, d.height); if (r) text = r.data;
+      }
+    }catch(e){}
+    if (text){ $('scan').value = text; stopCam(); handleScan(text); }
+  }, 300);
+});
+</script>
+</body>
+</html>
